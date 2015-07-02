@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Drump</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="four_four">4/3</string>
+    <string name="pl">PL</string>
+    <string name="title_activity_help">HelpActivity</string>
+</resources>

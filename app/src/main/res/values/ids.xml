@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="note_1_1" type="id"/>
+    <item name="note_1_2" type="id"/>
+    <item name="note_1_3" type="id"/>
+    <item name="note_1_4" type="id"/>
+    <item name="note_1_5" type="id"/>
+    <item name="note_1_6" type="id"/>
+    <item name="note_1_7" type="id"/>
+    <item name="note_1_8" type="id"/>
+    <item name="note_1_9" type="id"/>
+    <item name="note_1_10" type="id"/>
+    <item name="note_1_11" type="id"/>
+    <item name="note_1_12" type="id"/>
+
+    <item name="note_1_13" type="id"/>
+    <item name="note_1_14" type="id"/>
+    <item name="note_1_15" type="id"/>
+    <item name="note_1_16" type="id"/>
+
+
+    <item name="note_2_1" type="id"/>
+    <item name="note_2_2" type="id"/>
+    <item name="note_2_3" type="id"/>
+    <item name="note_2_4" type="id"/>
+    <item name="note_2_5" type="id"/>
+    <item name="note_2_6" type="id"/>
+    <item name="note_2_7" type="id"/>
+    <item name="note_2_8" type="id"/>
+    <item name="note_2_9" type="id"/>
+    <item name="note_2_10" type="id"/>
+    <item name="note_2_11" type="id"/>
+    <item name="note_2_12" type="id"/>
+
+    <item name="note_2_13" type="id"/>
+    <item name="note_2_14" type="id"/>
+    <item name="note_2_15" type="id"/>
+    <item name="note_2_16" type="id"/>
+</resources>
