@@ -33,6 +33,7 @@ public class CursorState {
     public static void setCol(int cols_new){
         cols = cols_new;
         placeWith = col_width*cols+(cols);
+        speed = (int)((60f/(40*4))*cols*1000);
     }
 
 }

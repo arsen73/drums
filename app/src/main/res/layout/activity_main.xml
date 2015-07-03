@@ -5,6 +5,7 @@
     android:gravity="center"
     android:layout_gravity="center"
     android:background="@color/white"
+    android:keepScreenOn="true"
     android:orientation="vertical"
     tools:context=".MainActivity">
 
@@ -121,6 +122,8 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:orientation="vertical"
+            android:gravity="right"
+            android:layout_marginRight="5dp"
             android:background="@color/white"
             android:id="@+id/x_text">
             <devapp.drump.ui.BoldTextView
@@ -129,7 +132,7 @@
                 android:text=" "/>
             <devapp.drump.ui.BoldTextView
                 style="@style/Xtext"
-                android:text="new"/>
+                android:text="Crash"/>
             <devapp.drump.ui.BoldTextView
                 style="@style/Xtext"
                 android:text="HiHt"/>
@@ -238,6 +241,7 @@
         </LinearLayout>
         <ImageView
             android:layout_width="4dp"
+            android:visibility="invisible"
             android:layout_height="match_parent"
             android:background="@drawable/cursor"
             android:id="@+id/cursor"/>

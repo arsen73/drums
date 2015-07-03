@@ -75,6 +75,8 @@ public class MainActivity extends ActionBarActivity {
         final ImageView cursor = (ImageView) findViewById(R.id.cursor);
         // Repeat
         final ImageView repeatButton = (ImageView) findViewById(R.id.repeatButton);
+        // Button four_four
+        final Button four_four = (Button) findViewById(R.id.four_four);
 
         // Animation
         final ValueAnimator anim = ValueAnimator.ofInt(0, CursorState.placeWith);
@@ -121,7 +123,7 @@ public class MainActivity extends ActionBarActivity {
                 anim.setDuration(CursorState.speed);
                 Log.d(LOG_TAG, "onEND");
 
-                if(CursorState.is_repeat){
+                if (CursorState.is_repeat) {
                     anim.setRepeatCount(ValueAnimator.INFINITE);
                     anim.setRepeatMode(ValueAnimator.INFINITE);
                     anim.start();
@@ -139,6 +141,8 @@ public class MainActivity extends ActionBarActivity {
 
                 repeatButton.setVisibility(View.VISIBLE);
                 npb.setVisibility(View.VISIBLE);
+                four_four.setVisibility(View.VISIBLE);
+                cursor.setVisibility(View.INVISIBLE);
             }
 
             @Override
@@ -179,14 +183,16 @@ public class MainActivity extends ActionBarActivity {
                     if(CursorState.is_pause){ // если поставлено на паузу
                         Log.d(LOG_TAG, "Возобновление");
                         //Log.d(LOG_TAG, String.valueOf((float)(CursorState.placeWith-CursorState.cursorPosition)/(float)CursorState.placeWith));
-                        anim.setIntValues(CursorState.cursorPosition, CursorState.placeWith - CursorState.col_width / 5);
+                        anim.setIntValues(CursorState.cursorPosition, CursorState.placeWith - CursorState.col_width / 3);
                         anim.setDuration((long) (((float)(CursorState.placeWith - CursorState.cursorPosition) / (float)CursorState.placeWith) * CursorState.speed));
                     } else {
                         anim.setDuration(CursorState.speed);
-                        anim.setIntValues(0, CursorState.placeWith - CursorState.col_width / 5);
+                        anim.setIntValues(0, CursorState.placeWith - CursorState.col_width / 3);
                         CursorState.animValue = 0;
-                        repeatButton.setVisibility(View.GONE);
-                        npb.setVisibility(View.GONE);
+                        repeatButton.setVisibility(View.INVISIBLE);
+                        npb.setVisibility(View.INVISIBLE);
+                        four_four.setVisibility(View.INVISIBLE);
+                        cursor.setVisibility(View.VISIBLE);
                     }
                     //Log.d(LOG_TAG, String.valueOf(CursorState.cursorPosition));
                     // запускаем анимацию
@@ -228,13 +234,12 @@ public class MainActivity extends ActionBarActivity {
 
                 repeatButton.setVisibility(View.VISIBLE);
                 npb.setVisibility(View.VISIBLE);
-
-
+                four_four.setVisibility(View.VISIBLE);
+                cursor.setVisibility(View.INVISIBLE);
             }
         });
 
-        // Button four_four
-        final Button four_four = (Button) findViewById(R.id.four_four);
+
         four_four.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
