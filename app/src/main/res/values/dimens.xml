@@ -15,4 +15,5 @@
     <dimen name="logo_margin_top">25dp</dimen>
     <dimen name="logo_margin_bottom">15dp</dimen>
     <dimen name="diff">5dp</dimen>
+    <dimen name="lv">120dp</dimen>
 </resources>

@@ -2,6 +2,8 @@ package devapp.drump;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
@@ -9,6 +11,7 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
@@ -29,11 +32,11 @@ import devapp.drump.helpers.SoundUtil;
 public class MainActivity extends ActionBarActivity {
 
     private final String LOG_TAG = "DRAM";
-    private final int POSITION = 1;
-    private final int STATE = 2;
 
     private final String STATE_CHECK = "check";
     private final String STATE_UNCHECK = "uncheck";
+
+    private final int default_speed = 40;
 
     private static int col = 0;
 
@@ -57,36 +60,24 @@ public class MainActivity extends ActionBarActivity {
         CursorState.init(this);
 
         // NumberPiker
-        final NumberPicker np = (NumberPicker) findViewById(R.id.speed);
-        String[] nums = new String[190];
-
-        for(int i=0; i<nums.length; i++)
-            nums[i] = Integer.toString(i+20);
-        np.setMaxValue(nums.length + 20);
-        np.setMinValue(20);
-        np.setValue(40);
-        CursorState.speed = (int)((60f/(40*4))*CursorState.cols*1000);
-        //np.setWrapSelectorWheel(false);
-        np.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
-
-        NumberPicker.OnValueChangeListener numberPickerOnChangedListener = new NumberPicker.OnValueChangeListener(){
+        final Button npb = (Button) findViewById(R.id.speed);
+        npb.setText(String.valueOf(default_speed));
+        npb.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onValueChange(NumberPicker numberPicker, int iOld, int iNew) {
-                CursorState.speed = (int)((60f/(iNew*4))*CursorState.cols*1000);
-                Log.d(LOG_TAG, String.valueOf(iNew));
-                Log.d(LOG_TAG, String.valueOf(60f/(float)iNew));
+            public void onClick(View view) {
+                showAlert();
             }
-        };
-
-        np.setOnValueChangedListener(numberPickerOnChangedListener);
+        });
 
         // Button Start/Stop
         final ImageView startButton = (ImageView) findViewById(R.id.start_play);
         // Cursor
         final ImageView cursor = (ImageView) findViewById(R.id.cursor);
+        // Repeat
+        final ImageView repeatButton = (ImageView) findViewById(R.id.repeatButton);
 
         // Animation
-        final ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
+        final ValueAnimator anim = ValueAnimator.ofInt(0, CursorState.placeWith);
         anim.setInterpolator(new LinearInterpolator());
 
         // Обработка движения курсора
@@ -97,44 +88,17 @@ public class MainActivity extends ActionBarActivity {
                     return;
                 }
 
-                CursorState.animValue = (Float) animation.getAnimatedValue();
-                CursorState.cursorPosition = CursorState.placeWith*CursorState.animValue ;
-                cursor.setTranslationX(CursorState.cursorPosition + (CursorState.displayWith - CursorState.placeWith)/2);
+                CursorState.cursorPosition = (int) animation.getAnimatedValue();
+                cursor.setTranslationX(CursorState.cursorPosition+(CursorState.displayWith - CursorState.placeWith)/2);
 
-                int t = (int)CursorState.cursorPosition;
-                if(t%(CursorState.col_width/2) < 20 && t%(CursorState.col_width) > 20){
-                    int next_col = (int)((t+CursorState.col_width/2)/(CursorState.col_width));
+                if(CursorState.cursorPosition%(CursorState.col_width/2) < 20 && CursorState.cursorPosition%(CursorState.col_width) > 20){
+                    int next_col = ((CursorState.cursorPosition+CursorState.col_width/2)/(CursorState.col_width));
                     if(next_col > col){
                         col = next_col;
                         ArrayState.check(col);
                     }
                 }
 
-                Log.d(LOG_TAG, "X: " + String.valueOf(CursorState.cursorPosition));
-                if(CursorState.cursorPosition >= CursorState.placeWith){ //END
-//                    CursorState.is_pause = true;
-//                    anim.end();
-
-//                    if(CursorState.is_repeat){
-//                        CursorState.is_pause = true;
-//                        anim.end();
-//                        anim.setFloatValues(0.0f, 1.0f);
-//                        //anim.start();
-//                    } else{
-//                        // отмечаем состояние анимации
-//                        CursorState.is_run = false;
-//                        // изменяем картинку на кнопке
-//                        startButton.setImageResource(R.drawable.ic_fa_play);
-//                    }
-//
-//                    // Возврат курсора
-//                    CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
-//                    cursor.setTranslationX(CursorState.cursorPosition);
-//                    // очищаем информацию о паузе
-//                    CursorState.animValue = 0;
-//                    CursorState.is_pause = false;
-//                    col = 0;
-                }
             }
         });
 
@@ -146,29 +110,46 @@ public class MainActivity extends ActionBarActivity {
 
             @Override
             public void onAnimationEnd(Animator animator) {
+                if (CursorState.is_pause) {
+                    return;
+                }
+
+                CursorState.is_pause = false;
+                col = 0;
+
+                anim.setIntValues(0, CursorState.placeWith);
+                anim.setDuration(CursorState.speed);
+                Log.d(LOG_TAG, "onEND");
+
+                if(CursorState.is_repeat){
+                    anim.setRepeatCount(ValueAnimator.INFINITE);
+                    anim.setRepeatMode(ValueAnimator.INFINITE);
+                    anim.start();
+                    return;
+                }
+
                 // отмечаем состояние анимации
                 CursorState.is_run = false;
                 // изменяем картинку на кнопке
                 startButton.setImageResource(R.drawable.ic_fa_play);
                 // Возврат курсора
-                CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
+                CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith) / 2;
                 cursor.setTranslationX(CursorState.cursorPosition);
                 // очищаем информацию о паузе
-                CursorState.animValue = 0;
-                CursorState.is_pause = false;
-                col = 0;
+
+                repeatButton.setVisibility(View.VISIBLE);
+                npb.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onAnimationCancel(Animator animator) {
-
+                Log.d(LOG_TAG, "onCancel");
             }
 
             @Override
             public void onAnimationRepeat(Animator animator) {
-                anim.setFloatValues(0.0f, 1.0f);
-                CursorState.animValue = 0;
-                CursorState.is_pause = false;
+//                anim.setDuration(CursorState.speed);
+//                anim.setIntValues(0, CursorState.placeWith - CursorState.col_width / 5);
                 col = 0;
             }
         });
@@ -181,12 +162,10 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View view) {
                 if(CursorState.is_run){
+                    Log.d(LOG_TAG, "Пауза");
                     // постановка на паузу
-                   // cursor.clearAnimation();
-
                     // отмечаем постановку на паузу
                     CursorState.is_pause = true;
-
                     // останавливаем анимацию
                     anim.end();
                     // отмечаем состояние анимации
@@ -194,16 +173,24 @@ public class MainActivity extends ActionBarActivity {
                     // изменяем картинку на кнопке
                     startButton.setImageResource(R.drawable.ic_fa_play);
                     // Возврат курсора
-                    //CursorState.cursorPosition = cursorShift;
-                    cursor.setTranslationX(CursorState.cursorPosition+(CursorState.displayWith - CursorState.placeWith)/2);
+                    anim.setRepeatCount(0);
                 } else {
+                    Log.d(LOG_TAG, "старт");
                     if(CursorState.is_pause){ // если поставлено на паузу
-                        CursorState.is_pause = false;
+                        Log.d(LOG_TAG, "Возобновление");
+                        //Log.d(LOG_TAG, String.valueOf((float)(CursorState.placeWith-CursorState.cursorPosition)/(float)CursorState.placeWith));
+                        anim.setIntValues(CursorState.cursorPosition, CursorState.placeWith - CursorState.col_width / 5);
+                        anim.setDuration((long) (((float)(CursorState.placeWith - CursorState.cursorPosition) / (float)CursorState.placeWith) * CursorState.speed));
+                    } else {
+                        anim.setDuration(CursorState.speed);
+                        anim.setIntValues(0, CursorState.placeWith - CursorState.col_width / 5);
+                        CursorState.animValue = 0;
+                        repeatButton.setVisibility(View.GONE);
+                        npb.setVisibility(View.GONE);
                     }
-                    anim.setFloatValues(CursorState.animValue, 1.0f);
-
+                    //Log.d(LOG_TAG, String.valueOf(CursorState.cursorPosition));
                     // запускаем анимацию
-                    anim.setDuration(CursorState.speed);
+                    CursorState.is_pause = false;
                     anim.start();
                     // останавливаем анимацию
                     CursorState.is_run = true;
@@ -219,17 +206,30 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View view) {
                 // останавливаем анимацию
+                Boolean tmp = CursorState.is_repeat;
+                CursorState.is_repeat = false;
+                anim.setRepeatCount(0);
                 anim.end();
-                // отмечаем состояние анимации
                 CursorState.is_run = false;
+                CursorState.is_repeat = tmp;
+
                 // изменяем картинку на кнопке
                 startButton.setImageResource(R.drawable.ic_fa_play);
                 // Возврат курсора
                 CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
                 cursor.setTranslationX(CursorState.cursorPosition);
                 // очищаем информацию о паузе
-                CursorState.animValue = 0;
+                //CursorState.animValue = 0;
                 CursorState.is_pause = false;
+                col = 0;
+                anim.setIntValues(0, CursorState.placeWith);
+                anim.setDuration(CursorState.speed);
+
+
+                repeatButton.setVisibility(View.VISIBLE);
+                npb.setVisibility(View.VISIBLE);
+
+
             }
         });
 
@@ -250,15 +250,15 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        ImageView repeatButton = (ImageView) findViewById(R.id.repeatButton);
+
         repeatButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 CursorState.is_repeat = !CursorState.is_repeat;
                 if(CursorState.is_repeat){
                     v.setBackgroundColor(Color.parseColor("#e84747"));
-                    anim.setRepeatCount(ValueAnimator.INFINITE);
-                    anim.setRepeatMode(ValueAnimator.RESTART);
+                   // anim.setRepeatCount(ValueAnimator.INFINITE);
+                   // anim.setRepeatMode(ValueAnimator.INFINITE);
                 }
                 else{
                     v.setBackgroundColor(Color.TRANSPARENT);
@@ -420,6 +420,69 @@ public class MainActivity extends ActionBarActivity {
     public void helpClick(View v){
         Intent intent = new Intent(this, HelpActivity.class);
         startActivity(intent);
+    }
+
+
+    /**
+     * Показ диалога для выбора колличества
+     */
+    private void showAlert(){
+
+        LayoutInflater factory = LayoutInflater.from(this);
+        final View textEntryView = factory.inflate(R.layout.dialog_speed, null);
+
+
+
+        final NumberPicker np = (NumberPicker) textEntryView.findViewById(R.id.sp);
+        String[] nums = new String[190];
+
+        for(int i=0; i<nums.length; i++)
+            nums[i] = Integer.toString(i+20);
+        np.setMaxValue(nums.length + 20);
+        np.setMinValue(20);
+        np.setValue(default_speed);
+        CursorState.speed = (int)((60f/(40*4))*CursorState.cols*1000);
+        //np.setWrapSelectorWheel(false);
+        np.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
+
+//        NumberPicker.OnValueChangeListener numberPickerOnChangedListener = new NumberPicker.OnValueChangeListener(){
+//            @Override
+//            public void onValueChange(NumberPicker numberPicker, int iOld, int iNew) {
+//                CursorState.speed = (int)((60f/(iNew*4))*CursorState.cols*1000);
+//                Log.d(LOG_TAG, String.valueOf(iNew));
+//                Log.d(LOG_TAG, String.valueOf(60f/(float)iNew));
+//            }
+//        };
+//
+//        np.setOnValueChangedListener(numberPickerOnChangedListener);
+
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        //alert.setTitle(title);
+        //alert.setMessage("Message");
+        alert.setView(textEntryView);
+
+        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                if(np.getValue() > 0){ // если колличество больше 0
+                    CursorState.speed = (int)((60f/(np.getValue()*4))*CursorState.cols*1000);
+                    Button npb = (Button) findViewById(R.id.speed);
+                    npb.setText(String.valueOf(np.getValue()));
+                }
+            }
+        });
+
+
+//        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+//            public void onClick(DialogInterface dialog, int whichButton) {
+//                if(np.getValue() > 0){ // если колличество больше 0
+//                    CursorState.speed = (int)((60f/(np.getValue()*4))*CursorState.cols*1000);
+//                    Button npb = (Button) findViewById(R.id.speed);
+//                    npb.setText(String.valueOf(np.getValue()));
+//                }
+//            }
+//        });
+        alert.show();
     }
 
 }
