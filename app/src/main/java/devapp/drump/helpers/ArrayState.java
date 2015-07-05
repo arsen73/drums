@@ -1,7 +1,5 @@
 package devapp.drump.helpers;
 
-import android.util.Log;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,13 +23,11 @@ public class ArrayState {
      * @param x
      */
     public static void check(int x){
-        Log.d("DRAMS", String.valueOf(x));
         Map<Integer, String> state = ArrayState.states.get(x);
         if(state != null)
         for(int y=1; y<=7; y++){
             String st = state.get(y);
             if(st != null && st == "check") {
-                Log.d("DRAMS", "SOUND "+String.valueOf(y));
                 switch (y){
                     case CRASH:
                         SoundUtil.playNote(SoundUtil.crashId);

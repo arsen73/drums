@@ -25,6 +25,8 @@ public class SoundUtil {
 
     public static Boolean is_init = false;
 
+    public static long time_count = 0;
+
     public static void initSound(Context context){
         soundPool = new SoundPool(6, AudioManager.STREAM_MUSIC, 0);
 
@@ -47,17 +49,15 @@ public class SoundUtil {
     public static void playNote(final int id){
         if(!is_init)
             return;
+        long cur = System.currentTimeMillis();
+       /// MainActivity.sp_test.setText(String.format("%.2f", (time_count - cur)/1000d));
+       // MainActivity.sp_test.setText(String.valueOf(time_count - cur));
+        time_count = cur;
         AsyncTask<Void, Void, Void> at = new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void result) {
-                super.onPostExecute(result);
                 SoundUtil.soundPool.play(id, 1, 1, 0, 0, 1);
+                return null;
             }
         };
 

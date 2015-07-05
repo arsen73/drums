@@ -1,8 +1,8 @@
 package devapp.drump;
 
-import android.animation.Animator;
-import android.animation.ValueAnimator;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -14,7 +14,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -28,6 +27,7 @@ import java.util.TimerTask;
 
 import devapp.drump.helpers.ArrayState;
 import devapp.drump.helpers.CursorState;
+import devapp.drump.helpers.DisplayUtil;
 import devapp.drump.helpers.SoundUtil;
 
 
@@ -38,9 +38,11 @@ public class MainActivity extends ActionBarActivity {
     private final String STATE_CHECK = "check";
     private final String STATE_UNCHECK = "uncheck";
 
-    private int default_speed = 80;
+
 
     private static int col = 0;
+
+    public static TextView sp_test;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,10 +62,12 @@ public class MainActivity extends ActionBarActivity {
 
         // Display and cursor parametrs
         CursorState.init(this);
+        CursorState.speed = (int)((60f/(CursorState.default_speed*4))*CursorState.cols*1000);
+       // sp_test = (TextView) findViewById(R.id.sp_test);
 
         // NumberPiker
         final Button npb = (Button) findViewById(R.id.speed);
-        npb.setText(String.valueOf(default_speed));
+        npb.setText(String.valueOf(CursorState.default_speed));
         npb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -80,87 +84,6 @@ public class MainActivity extends ActionBarActivity {
         // Button four_four
         final Button four_four = (Button) findViewById(R.id.four_four);
 
-        // Animation
-        final ValueAnimator anim = ValueAnimator.ofInt(0, CursorState.placeWith);
-        anim.setInterpolator(new LinearInterpolator());
-
-        // Обработка движения курсора
-        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            public void onAnimationUpdate(ValueAnimator animation) {
-                // если поставлено на паузу пропускаем вызов
-                if(CursorState.is_pause){
-                    return;
-                }
-
-                CursorState.cursorPosition = (int) animation.getAnimatedValue();
-                cursor.setTranslationX(CursorState.cursorPosition+(CursorState.displayWith - CursorState.placeWith)/2);
-
-//                if(CursorState.cursorPosition%(CursorState.col_width/2) < 20 && CursorState.cursorPosition%(CursorState.col_width) > 20){
-//                    int next_col = ((CursorState.cursorPosition+CursorState.col_width/2)/(CursorState.col_width));
-//                    if(next_col > col){
-//                        col = next_col;
-//                        ArrayState.check(col);
-//                    }
-//                }
-
-            }
-        });
-
-        anim.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animator) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animator) {
-                if (CursorState.is_pause) {
-                    return;
-                }
-
-                CursorState.is_pause = false;
-                col = 0;
-
-                anim.setIntValues(0, CursorState.placeWith);
-                anim.setDuration(CursorState.speed);
-                Log.d(LOG_TAG, "onEND");
-
-                if (CursorState.is_repeat) {
-                    anim.setRepeatCount(ValueAnimator.INFINITE);
-                    anim.setRepeatMode(ValueAnimator.INFINITE);
-                    anim.start();
-                    return;
-                }
-
-                // отмечаем состояние анимации
-                CursorState.is_run = false;
-                // изменяем картинку на кнопке
-                startButton.setImageResource(R.drawable.ic_fa_play);
-                // Возврат курсора
-                CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith) / 2;
-                cursor.setTranslationX(CursorState.cursorPosition);
-                // очищаем информацию о паузе
-
-                repeatButton.setVisibility(View.VISIBLE);
-                npb.setVisibility(View.VISIBLE);
-                four_four.setVisibility(View.VISIBLE);
-                cursor.setVisibility(View.INVISIBLE);
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animator) {
-                Log.d(LOG_TAG, "onCancel");
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-//                anim.setDuration(CursorState.speed);
-//                anim.setIntValues(0, CursorState.placeWith - CursorState.col_width / 5);
-                col = 0;
-            }
-        });
-
-
         // BUTTONS //
 
         // Button Start/Pause Onclick
@@ -173,25 +96,18 @@ public class MainActivity extends ActionBarActivity {
                     pausePlay();
                     // отмечаем постановку на паузу
                     CursorState.is_pause = true;
-                    // останавливаем анимацию
-                    anim.end();
                     // отмечаем состояние анимации
                     CursorState.is_run = false;
                     // изменяем картинку на кнопке
                     startButton.setImageResource(R.drawable.ic_fa_play);
-                    // Возврат курсора
-                    anim.setRepeatCount(0);
                 } else {
                     Log.d(LOG_TAG, "старт");
                     if(CursorState.is_pause){ // если поставлено на паузу
                         Log.d(LOG_TAG, "Возобновление");
                         //Log.d(LOG_TAG, String.valueOf((float)(CursorState.placeWith-CursorState.cursorPosition)/(float)CursorState.placeWith));
-                        anim.setIntValues(CursorState.cursorPosition, CursorState.placeWith - CursorState.col_width / 3);
-                        anim.setDuration((long) (((float)(CursorState.placeWith - CursorState.cursorPosition) / (float)CursorState.placeWith) * CursorState.speed));
+
                     } else {
-                        anim.setDuration(CursorState.speed);
-                        anim.setIntValues(0, CursorState.placeWith - CursorState.col_width / 3);
-                        CursorState.animValue = 0;
+                        CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
                         repeatButton.setVisibility(View.INVISIBLE);
                         npb.setVisibility(View.INVISIBLE);
                         four_four.setVisibility(View.INVISIBLE);
@@ -200,8 +116,6 @@ public class MainActivity extends ActionBarActivity {
                     //Log.d(LOG_TAG, String.valueOf(CursorState.cursorPosition));
                     // запускаем анимацию
                     CursorState.is_pause = false;
-                    anim.start();
-                    // останавливаем анимацию
                     CursorState.is_run = true;
                     // изменяем картинку на кнопке
                     startButton.setImageResource(R.drawable.ic_fa_pause);
@@ -219,8 +133,6 @@ public class MainActivity extends ActionBarActivity {
                 // останавливаем анимацию
                 Boolean tmp = CursorState.is_repeat;
                 CursorState.is_repeat = false;
-                anim.setRepeatCount(0);
-                anim.end();
                 CursorState.is_run = false;
                 CursorState.is_repeat = tmp;
 
@@ -233,10 +145,6 @@ public class MainActivity extends ActionBarActivity {
                 //CursorState.animValue = 0;
                 CursorState.is_pause = false;
                 col = 0;
-                anim.setIntValues(0, CursorState.placeWith);
-                anim.setDuration(CursorState.speed);
-
-
                 repeatButton.setVisibility(View.VISIBLE);
                 npb.setVisibility(View.VISIBLE);
                 four_four.setVisibility(View.VISIBLE);
@@ -267,12 +175,9 @@ public class MainActivity extends ActionBarActivity {
                 CursorState.is_repeat = !CursorState.is_repeat;
                 if(CursorState.is_repeat){
                     v.setBackgroundColor(Color.parseColor("#e84747"));
-                   // anim.setRepeatCount(ValueAnimator.INFINITE);
-                   // anim.setRepeatMode(ValueAnimator.INFINITE);
                 }
                 else{
                     v.setBackgroundColor(Color.TRANSPARENT);
-                    anim.setRepeatCount(0);
                 }
             }
         });
@@ -362,7 +267,7 @@ public class MainActivity extends ActionBarActivity {
             } else {
                 textView.setText("R");
             }
-            textView.setMinimumWidth(width_col);
+            textView.setMinimumWidth(width_col+ DisplayUtil.dpToPx(2));
             linLayout.addView(textView);
         }
     }
@@ -435,12 +340,8 @@ public class MainActivity extends ActionBarActivity {
      * Показ диалога для выбора колличества
      */
     private void showAlert(){
-
         LayoutInflater factory = LayoutInflater.from(this);
         final View textEntryView = factory.inflate(R.layout.dialog_speed, null);
-
-
-
         final NumberPicker np = (NumberPicker) textEntryView.findViewById(R.id.sp);
         String[] nums = new String[190];
 
@@ -448,95 +349,119 @@ public class MainActivity extends ActionBarActivity {
             nums[i] = Integer.toString(i+20);
         np.setMaxValue(nums.length + 20);
         np.setMinValue(20);
-        np.setValue(default_speed);
-        CursorState.speed = (int)((60f/(default_speed*4))*CursorState.cols*1000);
+        np.setValue(CursorState.default_speed);
+        CursorState.speed = (int)((60f/(CursorState.default_speed*4))*CursorState.cols*1000);
         //np.setWrapSelectorWheel(false);
         np.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
 
-//        NumberPicker.OnValueChangeListener numberPickerOnChangedListener = new NumberPicker.OnValueChangeListener(){
-//            @Override
-//            public void onValueChange(NumberPicker numberPicker, int iOld, int iNew) {
-//                CursorState.speed = (int)((60f/(iNew*4))*CursorState.cols*1000);
-//                Log.d(LOG_TAG, String.valueOf(iNew));
-//                Log.d(LOG_TAG, String.valueOf(60f/(float)iNew));
-//            }
-//        };
-//
-//        np.setOnValueChangedListener(numberPickerOnChangedListener);
-
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-        //alert.setTitle(title);
-        //alert.setMessage("Message");
         alert.setView(textEntryView);
 
         alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 if(np.getValue() > 0){ // если колличество больше 0
-                    default_speed = np.getValue();
+                    CursorState.default_speed = np.getValue();
                     CursorState.speed = (int)((60f/(np.getValue()*4))*CursorState.cols*1000);
                     Button npb = (Button) findViewById(R.id.speed);
                     npb.setText(String.valueOf(np.getValue()));
                 }
             }
         });
-
-
-//        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//            public void onClick(DialogInterface dialog, int whichButton) {
-//                if(np.getValue() > 0){ // если колличество больше 0
-//                    CursorState.speed = (int)((60f/(np.getValue()*4))*CursorState.cols*1000);
-//                    Button npb = (Button) findViewById(R.id.speed);
-//                    npb.setText(String.valueOf(np.getValue()));
-//                }
-//            }
-//        });
         alert.show();
     }
 
-    private Timer mTimer;
-    private int count_col = 0;
+    private ImageView cur;
+    public static long time;
+    public static int count_col = 0;
 
-    private void startPlay(){
-        if(mTimer != null){
-            mTimer.cancel();
-        }
+    long starttime = 0;
 
-        // считаем период
-        //CursorState.speed = (int)((60f/(40*4))*CursorState.cols*1000);
-        int time = (int)((float)CursorState.speed)/(CursorState.cols);
-        // запускаем таймер
-        mTimer = new Timer();
-        TimerTask mMyTimerTask = new TimerTask(){
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        count_col++;
-                        ArrayState.check(count_col);
-                        if(count_col >= CursorState.cols){
-                            count_col = 0;
-                            if(!CursorState.is_repeat){
-                                stopPlay();
-                            }
+    //tells activity to run on ui thread
+    class secondTask extends TimerTask {
+
+        @Override
+        public void run() {
+            MainActivity.this.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                        CursorState.cursorPosition += CursorState.col_width / 10;
+                        cur.setTranslationX(CursorState.cursorPosition);
+
+                    if (CursorState.cursorPosition >= CursorState.placeWith+(CursorState.displayWith - CursorState.placeWith)/2) {
+                        CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
+                        if(!CursorState.is_repeat){
+                            CursorState.is_run = false;
+
+                            // Button Start/Stop
+                            final ImageView startButton = (ImageView) findViewById(R.id.start_play);
+                            // Cursor
+                            final ImageView cursor = (ImageView) findViewById(R.id.cursor);
+                            // Repeat
+                            final ImageView repeatButton = (ImageView) findViewById(R.id.repeatButton);
+                            // Button four_four
+                            final Button four_four = (Button) findViewById(R.id.four_four);
+
+                            startButton.setImageResource(R.drawable.ic_fa_play);
+                            // Возврат курсора
+                            CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
+                            cursor.setTranslationX(CursorState.cursorPosition);
+                            // очищаем информацию о паузе
+                            //CursorState.animValue = 0;
+                            CursorState.is_pause = false;
+                            col = 0;
+                            repeatButton.setVisibility(View.VISIBLE);
+                            final Button npb = (Button) findViewById(R.id.speed);
+                            npb.setVisibility(View.VISIBLE);
+                            four_four.setVisibility(View.VISIBLE);
+                            cursor.setVisibility(View.INVISIBLE);
+
                         }
                     }
-                });
-            }
-        };
-        mTimer.schedule(mMyTimerTask, (time/2), time);
+                    if(!CursorState.is_run){
+                        timer.cancel();
+                        timer.purge();
+                        //CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
+                    }
+
+                }
+            });
+        }
+    };
+
+
+    Timer timer = new Timer();
+    private void startPlay(){
+        cur = (ImageView) findViewById(R.id.cursor);
+        time = (int)((float)CursorState.speed)/(CursorState.cols);
+        starttime = System.currentTimeMillis();
+        timer = new Timer();
+        timer.schedule(new secondTask(), 0, time / 10);
+
+        Intent intent = new Intent(MainActivity.this, PlayService.class);
+        startService(intent);
     }
 
     private void pausePlay(){
-        if(mTimer != null){
-            mTimer.cancel();
-            mTimer.purge();
-        }
+        timer.cancel();
+        timer.purge();
+        stopService(new Intent(MainActivity.this, PlayService.class));
     }
 
     private void stopPlay(){
         pausePlay();
         count_col = 0;
     }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

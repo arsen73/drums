@@ -23,6 +23,8 @@ public class CursorState {
 
     public static Boolean is_repeat = false;
 
+    public static int default_speed = 80;
+
     public static void init(Activity act){
         displayHeight = DisplayUtil.getWinHeight(act);
         displayWith = DisplayUtil.getWinWith(act);
@@ -33,7 +35,7 @@ public class CursorState {
     public static void setCol(int cols_new){
         cols = cols_new;
         placeWith = col_width*cols+(cols);
-        speed = (int)((60f/(40*4))*cols*1000);
+        speed = (int)((60f/(default_speed*4))*cols*1000);
     }
 
 }
