@@ -4,6 +4,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.AsyncTask;
+import android.os.Build;
 
 import devapp.drump.R;
 
@@ -60,7 +61,10 @@ public class SoundUtil {
             }
         };
 
-        at.execute();
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+            at.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        else
+            at.execute();
     }
 
 }

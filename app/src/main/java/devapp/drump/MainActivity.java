@@ -23,6 +23,8 @@ import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import devapp.drump.helpers.ArrayState;
 import devapp.drump.helpers.CursorState;
@@ -36,7 +38,7 @@ public class MainActivity extends ActionBarActivity {
     private final String STATE_CHECK = "check";
     private final String STATE_UNCHECK = "uncheck";
 
-    private final int default_speed = 40;
+    private int default_speed = 80;
 
     private static int col = 0;
 
@@ -93,13 +95,13 @@ public class MainActivity extends ActionBarActivity {
                 CursorState.cursorPosition = (int) animation.getAnimatedValue();
                 cursor.setTranslationX(CursorState.cursorPosition+(CursorState.displayWith - CursorState.placeWith)/2);
 
-                if(CursorState.cursorPosition%(CursorState.col_width/2) < 20 && CursorState.cursorPosition%(CursorState.col_width) > 20){
-                    int next_col = ((CursorState.cursorPosition+CursorState.col_width/2)/(CursorState.col_width));
-                    if(next_col > col){
-                        col = next_col;
-                        ArrayState.check(col);
-                    }
-                }
+//                if(CursorState.cursorPosition%(CursorState.col_width/2) < 20 && CursorState.cursorPosition%(CursorState.col_width) > 20){
+//                    int next_col = ((CursorState.cursorPosition+CursorState.col_width/2)/(CursorState.col_width));
+//                    if(next_col > col){
+//                        col = next_col;
+//                        ArrayState.check(col);
+//                    }
+//                }
 
             }
         });
@@ -168,6 +170,7 @@ public class MainActivity extends ActionBarActivity {
                 if(CursorState.is_run){
                     Log.d(LOG_TAG, "Пауза");
                     // постановка на паузу
+                    pausePlay();
                     // отмечаем постановку на паузу
                     CursorState.is_pause = true;
                     // останавливаем анимацию
@@ -202,6 +205,7 @@ public class MainActivity extends ActionBarActivity {
                     CursorState.is_run = true;
                     // изменяем картинку на кнопке
                     startButton.setImageResource(R.drawable.ic_fa_pause);
+                    startPlay();
                 }
             }
         });
@@ -211,6 +215,7 @@ public class MainActivity extends ActionBarActivity {
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                stopPlay();
                 // останавливаем анимацию
                 Boolean tmp = CursorState.is_repeat;
                 CursorState.is_repeat = false;
@@ -389,7 +394,6 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-
     /**
      * Клик по ноте
      * @param view
@@ -427,7 +431,6 @@ public class MainActivity extends ActionBarActivity {
         startActivity(intent);
     }
 
-
     /**
      * Показ диалога для выбора колличества
      */
@@ -446,7 +449,7 @@ public class MainActivity extends ActionBarActivity {
         np.setMaxValue(nums.length + 20);
         np.setMinValue(20);
         np.setValue(default_speed);
-        CursorState.speed = (int)((60f/(40*4))*CursorState.cols*1000);
+        CursorState.speed = (int)((60f/(default_speed*4))*CursorState.cols*1000);
         //np.setWrapSelectorWheel(false);
         np.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
 
@@ -470,6 +473,7 @@ public class MainActivity extends ActionBarActivity {
         alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 if(np.getValue() > 0){ // если колличество больше 0
+                    default_speed = np.getValue();
                     CursorState.speed = (int)((60f/(np.getValue()*4))*CursorState.cols*1000);
                     Button npb = (Button) findViewById(R.id.speed);
                     npb.setText(String.valueOf(np.getValue()));
@@ -490,4 +494,49 @@ public class MainActivity extends ActionBarActivity {
         alert.show();
     }
 
+    private Timer mTimer;
+    private int count_col = 0;
+
+    private void startPlay(){
+        if(mTimer != null){
+            mTimer.cancel();
+        }
+
+        // считаем период
+        //CursorState.speed = (int)((60f/(40*4))*CursorState.cols*1000);
+        int time = (int)((float)CursorState.speed)/(CursorState.cols);
+        // запускаем таймер
+        mTimer = new Timer();
+        TimerTask mMyTimerTask = new TimerTask(){
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        count_col++;
+                        ArrayState.check(count_col);
+                        if(count_col >= CursorState.cols){
+                            count_col = 0;
+                            if(!CursorState.is_repeat){
+                                stopPlay();
+                            }
+                        }
+                    }
+                });
+            }
+        };
+        mTimer.schedule(mMyTimerTask, (time/2), time);
+    }
+
+    private void pausePlay(){
+        if(mTimer != null){
+            mTimer.cancel();
+            mTimer.purge();
+        }
+    }
+
+    private void stopPlay(){
+        pausePlay();
+        count_col = 0;
+    }
 }
