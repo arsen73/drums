@@ -2,6 +2,8 @@ package devapp.drump.helpers;
 
 import android.app.Activity;
 
+import devapp.drump.R;
+
 /**
  * Created by arseniy on 25/06/15.
  */
@@ -24,6 +26,10 @@ public class CursorState {
     public static Boolean is_repeat = false;
 
     public static int default_speed = 80;
+
+    public static long temp_time = 0;
+
+    public static int current_page = R.id.page_1;
 
     public static void init(Activity act){
         displayHeight = DisplayUtil.getWinHeight(act);

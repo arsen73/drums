@@ -33,6 +33,7 @@
                 android:layout_marginTop="@dimen/button_margin_top"
                 android:layout_marginBottom="@dimen/button_margin"
                 android:minWidth="@dimen/button_min_width"
+                android:onClick="toFirst"
                 />
             <ImageView
                 android:layout_width="wrap_content"
@@ -92,7 +93,8 @@
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp"
                 style="@style/ButtonSmallText"
-                android:text="@string/pl"/>
+                android:text="@string/pl"
+                android:id="@+id/pl"/>
         </LinearLayout>
 
         </RelativeLayout>
@@ -271,34 +273,53 @@
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
                     android:text="1"
-                    android:id="@+id/button1"/>
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_1"/>
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
-                    android:text="2"/>
+                    android:text="2"
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_2"/>
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
-                    android:text="3"/>
+                    android:text="3"
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_3"/>
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
-                    android:text="4"/>
+                    android:text="4"
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_4"/>
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
-                    android:text="5"/>
+                    android:text="5"
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_5"/>
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
-                    android:text="6"/>
+                    android:text="6"
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_6"/>
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
-                    android:text="7"/>
+                    android:text="7"
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_7"/>
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
-                    android:text="8"/>
+                    android:text="8"
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_8"/>
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
-                    android:text="9"/>
+                    android:text="9"
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_9"/>
                 <devapp.drump.ui.BoldButton
                     style="@style/Button"
-                    android:text="10"/>
+                    android:text="10"
+                    android:onClick="clickByPage"
+                    android:id="@+id/page_10"/>
             </LinearLayout>
         </HorizontalScrollView>
 
@@ -319,11 +340,12 @@
             />
     </LinearLayout>
 
-    <!-- тест скорости и ритма -->
+     <!--тест скорости и ритма -->
     <!--<TextView-->
         <!--android:layout_width="wrap_content"-->
         <!--android:layout_height="wrap_content"-->
         <!--android:textSize="32sp"-->
+        <!--android:textColor="#ffce1418"-->
         <!--android:id="@+id/sp_test"/>-->
 
 </LinearLayout>

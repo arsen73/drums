@@ -10,7 +10,7 @@
     <dimen name="button_padding_h_small">5dp</dimen>
     <dimen name="button_margin">10dp</dimen>
     <dimen name="button_margin_top">0dp</dimen>
-    <dimen name="x_text_size">10sp</dimen>
+    <dimen name="x_text_size">8sp</dimen>
     <dimen name="x_text_with">30dp</dimen>
     <dimen name="logo_margin_top">25dp</dimen>
     <dimen name="logo_margin_bottom">15dp</dimen>

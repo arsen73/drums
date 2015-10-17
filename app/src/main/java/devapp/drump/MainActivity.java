@@ -1,8 +1,6 @@
 package devapp.drump;
 
-import android.app.ActivityManager;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -20,6 +18,9 @@ import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 
+import org.json.JSONObject;
+
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -28,21 +29,18 @@ import java.util.TimerTask;
 import devapp.drump.helpers.ArrayState;
 import devapp.drump.helpers.CursorState;
 import devapp.drump.helpers.DisplayUtil;
+import devapp.drump.helpers.PreferenceHelper;
 import devapp.drump.helpers.SoundUtil;
 
 
 public class MainActivity extends ActionBarActivity {
 
     private final String LOG_TAG = "DRAM";
-
     private final String STATE_CHECK = "check";
     private final String STATE_UNCHECK = "uncheck";
-
-
+    private int CICLE = 0;
 
     private static int col = 0;
-
-    public static TextView sp_test;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +61,7 @@ public class MainActivity extends ActionBarActivity {
         // Display and cursor parametrs
         CursorState.init(this);
         CursorState.speed = (int)((60f/(CursorState.default_speed*4))*CursorState.cols*1000);
-       // sp_test = (TextView) findViewById(R.id.sp_test);
+        //sp_test = (TextView) findViewById(R.id.sp_test);
 
         // NumberPiker
         final Button npb = (Button) findViewById(R.id.speed);
@@ -83,6 +81,8 @@ public class MainActivity extends ActionBarActivity {
         final ImageView repeatButton = (ImageView) findViewById(R.id.repeatButton);
         // Button four_four
         final Button four_four = (Button) findViewById(R.id.four_four);
+        // Button cicle type
+        final Button cicle_type = (Button) findViewById(R.id.pl);
 
         // BUTTONS //
 
@@ -130,6 +130,7 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View view) {
                 stopPlay();
+                //TODO можно перенести всё в отдельную функцию если вынести обьекты view в свойства класса
                 // останавливаем анимацию
                 Boolean tmp = CursorState.is_repeat;
                 CursorState.is_repeat = false;
@@ -173,26 +174,33 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View v) {
                 CursorState.is_repeat = !CursorState.is_repeat;
-                if(CursorState.is_repeat){
+                if (CursorState.is_repeat) {
                     v.setBackgroundColor(Color.parseColor("#e84747"));
-                }
-                else{
+                } else {
                     v.setBackgroundColor(Color.TRANSPARENT);
                 }
             }
         });
 
+        cicle_type.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(CICLE == 1){
+                    ((Button)view).setText("ONE");
+                    CICLE = 0;
+                } else {
+                    ((Button)view).setText("ALL");
+                    CICLE = 1;
+                }
+            }
+        });
+
         // кнопки страниц
-        Button page1 = (Button)findViewById(R.id.button1);
-        page1.setPressed(true);
+        Button page1 = (Button)findViewById(R.id.page_1);
+        page1.setActivated(true);
 
         // рисуем поле
-        generateGrid();
-    }
-
-
-    public void onStart(){
-        super.onStart();
+        refreshPage();
     }
 
     /**
@@ -286,15 +294,15 @@ public class MainActivity extends ActionBarActivity {
             ImageView imageView = (ImageView) getLayoutInflater().inflate(layout, null);
             imageView.setTag("note_" + String.valueOf(row) + "_" + String.valueOf(i));
             imageView.setMinimumWidth(width_col);
-
+            // отображаем ноты
             Map<Integer, String> st = ArrayState.states.get(i);
             if(st != null){
                 String state = st.get(row);
-                if(state != null && state == STATE_CHECK){
+                Log.d(LOG_TAG, "NOTE: " + row + " " + state);
+                if(state != null && state.equals(STATE_CHECK)){
                     imageView.setBackgroundResource(R.drawable.circle_dark);
                 }
             }
-
             linLayout.addView(imageView);
         }
     }
@@ -314,12 +322,12 @@ public class MainActivity extends ActionBarActivity {
 
         Map<Integer, String> state = ArrayState.states.get(x);
 
-        if(state == null){
+        if(state == null || state.equals(STATE_UNCHECK)){
             state = new HashMap<>();
             state.put(y, STATE_CHECK);
             view.setBackgroundResource(R.drawable.circle_dark);
         } else {
-            if(state.get(y) == STATE_CHECK){
+            if(state.get(y) != null && state.get(y).equals(STATE_CHECK)){
                 state.put(y, STATE_UNCHECK);
                 view.setBackgroundResource(R.drawable.circle_empty);
             } else {
@@ -331,6 +339,10 @@ public class MainActivity extends ActionBarActivity {
         Log.d(LOG_TAG, "click");
     }
 
+    /**
+     * клик по кнопке справка
+     * @param v
+     */
     public void helpClick(View v){
         Intent intent = new Intent(this, HelpActivity.class);
         startActivity(intent);
@@ -377,6 +389,8 @@ public class MainActivity extends ActionBarActivity {
 
     long starttime = 0;
 
+    // Таймер для движения курсора
+
     //tells activity to run on ui thread
     class secondTask extends TimerTask {
 
@@ -386,12 +400,13 @@ public class MainActivity extends ActionBarActivity {
 
                 @Override
                 public void run() {
-                        CursorState.cursorPosition += CursorState.col_width / 10;
-                        cur.setTranslationX(CursorState.cursorPosition);
+                    //sp_test.setText(String.valueOf(CursorState.temp_time)); // отображение периода
+                    CursorState.cursorPosition += CursorState.col_width / 45; //шаг курсора
+                    cur.setTranslationX(CursorState.cursorPosition);
 
                     if (CursorState.cursorPosition >= CursorState.placeWith+(CursorState.displayWith - CursorState.placeWith)/2) {
                         CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
-                        if(!CursorState.is_repeat){
+                        if((!CursorState.is_repeat && CICLE != 1) || CursorState.current_page == R.id.page_10){
                             CursorState.is_run = false;
 
                             // Button Start/Stop
@@ -406,6 +421,9 @@ public class MainActivity extends ActionBarActivity {
                             startButton.setImageResource(R.drawable.ic_fa_play);
                             // Возврат курсора
                             CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
+
+                            CursorState.cursorPosition+=CursorState.col_width/2;
+
                             cursor.setTranslationX(CursorState.cursorPosition);
                             // очищаем информацию о паузе
                             //CursorState.animValue = 0;
@@ -420,9 +438,11 @@ public class MainActivity extends ActionBarActivity {
                         }
                     }
                     if(!CursorState.is_run){
-                        timer.cancel();
-                        timer.purge();
-                        //CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
+                        if(CursorState.is_pause){
+                            pausePlay();
+                        } else {
+                            stopPlay();
+                        }
                     }
 
                 }
@@ -432,36 +452,220 @@ public class MainActivity extends ActionBarActivity {
 
 
     Timer timer = new Timer();
+
+    /**
+     * Начало воспроизведения
+     */
     private void startPlay(){
         cur = (ImageView) findViewById(R.id.cursor);
         time = (int)((float)CursorState.speed)/(CursorState.cols);
         starttime = System.currentTimeMillis();
         timer = new Timer();
-        timer.schedule(new secondTask(), 0, time / 10);
+        long d = ((long)CursorState.speed/(long)CursorState.cols)/50L;
+        Log.d("TEST", String.valueOf(d));
+        timer.schedule(new secondTask(), 0, d);
 
-        Intent intent = new Intent(MainActivity.this, PlayService.class);
-        startService(intent);
+        // воспроизведение
+        Thread th = new Thread(new Runnable(){
+
+
+
+            public void run() {
+
+                long old_time = 0;
+                long millis = 0;
+                long m_time = 0;
+               // long curr = 0;
+                long diff = ((long)CursorState.speed/(long)CursorState.cols)*1000000L;
+                long diff2 = diff/2L;
+                // int cursor_diff = (CursorState.displayWith - CursorState.placeWith)/2;
+
+                // пока не остановлено воспроизведение
+                while (CursorState.is_run){
+                    m_time = System.nanoTime() - old_time;
+
+                    if ((m_time >= diff2 && m_time <= diff) || old_time == 0L ) {
+                        // ожидаем недостающий промежуток вермени
+                        while (m_time <= diff){
+                            m_time =  System.nanoTime() - old_time;
+                        }
+                        // если воспроизведение остановлено
+                        if (!CursorState.is_run) {
+                            break;
+                        }
+
+                        CursorState.temp_time = (System.nanoTime()-millis) / 1000000L;
+                        old_time = System.nanoTime();
+                        millis = old_time;
+
+                        MainActivity.count_col++;
+                        ArrayState.check(MainActivity.count_col);
+
+                        CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
+
+                        CursorState.cursorPosition+=CursorState.col_width/2;
+
+                        CursorState.cursorPosition+=CursorState.col_width*(MainActivity.count_col-1);
+                        // если дошли до конца листа
+                        if (MainActivity.count_col >= CursorState.cols) {
+                            MainActivity.count_col = 0;
+
+                            if(CICLE == 1){ //если воспроизведение всех страниц
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        nextPage();
+                                    }
+                                });
+                            }
+
+                            // если нет повтора
+                            if ((!CursorState.is_repeat && CICLE != 1) || CursorState.current_page == R.id.page_10) {
+                                break;
+                            }
+
+                            CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
+                        }
+
+                       // CursorState.cursorPosition = cursor_diff + CursorState.col_width*MainActivity.count_col - CursorState.col_width/2 ;
+
+                        old_time = old_time - (System.nanoTime() - old_time);
+                    }
+                }
+
+            }
+        });
+        th.setPriority(Thread.MAX_PRIORITY);
+        th.start();
     }
 
+    /**
+     * Пауза воспроизведения
+     */
     private void pausePlay(){
         timer.cancel();
         timer.purge();
-        stopService(new Intent(MainActivity.this, PlayService.class));
     }
 
+    /**
+     * Остановка воспроизведения
+     */
     private void stopPlay(){
         pausePlay();
         count_col = 0;
+        CursorState.is_pause = false;
+        CursorState.is_run = false;
+        CursorState.cursorPosition = (CursorState.displayWith - CursorState.placeWith)/2;
+        CursorState.cursorPosition+=CursorState.col_width/2;
     }
 
-    private boolean isMyServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
+    /**
+     * Клик по странице
+     * @param v
+     */
+    public void clickByPage(View v){
+        // если страница не изменилась
+        if(CursorState.current_page == v.getId())
+            return;
+        toPage(v);
+    }
+
+    private void toPage(View v){
+        // сохранение текущей страницы
+        ArrayState.saveState(this);
+        // снимаем активацию с предыдущей кнопки
+        View old_button = findViewById(CursorState.current_page);
+        old_button.setActivated(false);
+        // отмечаем активной текущую кнопку
+        v.setActivated(true);
+        // обновляем ид активной страницы
+        CursorState.current_page = v.getId();
+        Log.d(LOG_TAG, "CURRENT PAGE " + CursorState.current_page);
+        refreshPage();
+    }
+
+    /**
+     * Получаем сохранённые данные
+     */
+    private void refreshPage(){
+        String page_date = PreferenceHelper.get(this, String.valueOf(CursorState.current_page), "");
+        Log.d(LOG_TAG, "SAVED DATE " + page_date);
+        ArrayState.states.clear();
+        if(page_date.equals("")){
+            // рисуем поле
+            generateGrid();
+            return;
         }
-        return false;
+        JSONObject json;
+        try{
+            json = new JSONObject(page_date);
+
+            for(int x = 16; x > 0; x--){
+                if(json.isNull(String.valueOf(x)))
+                    continue;
+                JSONObject col = json.getJSONObject(String.valueOf(x));
+                Map<Integer, String> m = new HashMap<>();
+                Log.d(LOG_TAG, "X "+x);
+                for(int y = 7; y > 0; y--){
+                    if(col.isNull(String.valueOf(y)))
+                        continue;
+                    Log.d(LOG_TAG, "Y "+y);
+                    String state = col.getString(String.valueOf(y));
+                    Log.d(LOG_TAG, "PUT STATE" + state);
+                    m.put(y, state);
+                }
+                ArrayState.states.put(x, m);
+            }
+        } catch (Exception e){
+            Log.d(LOG_TAG, e.getMessage());
+            return;
+        } finally {
+            // рисуем поле
+            generateGrid();
+        }
     }
 
+    /**
+     * переключение на следующую страницу
+     */
+    private void nextPage(){
+       Integer[] pages = {
+               R.id.page_1,
+               R.id.page_2,
+               R.id.page_3,
+               R.id.page_4,
+               R.id.page_5,
+               R.id.page_6,
+               R.id.page_7,
+               R.id.page_8,
+               R.id.page_9,
+               R.id.page_10,
+       };
+        int current_index = Arrays.asList(pages).indexOf(CursorState.current_page) + 1;
+        if(current_index >= pages.length){
+            current_index = 0;
+        }
+        View v= findViewById(pages[current_index]);
+        toPage(v);
+    }
+
+    public void toFirst(View view){
+        View v= findViewById(R.id.page_1);
+        toPage(v);
+    }
+
+    @Override
+    protected void onPause(){
+        // сохранение текущей страницы
+        ArrayState.saveState(this);
+        stopPlay();
+        super.onPause();
+    }
+
+    protected void onStop(){
+        // сохранение текущей страницы
+        ArrayState.saveState(this);
+        stopPlay();
+        super.onStop();
+    }
 }

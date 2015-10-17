@@ -28,7 +28,7 @@ public class SoundUtil {
     public static long time_count = 0;
 
     public static void initSound(Context context){
-        soundPool = new SoundPool(6, AudioManager.STREAM_MUSIC, 0);
+        soundPool = new SoundPool(20, AudioManager.STREAM_MUSIC, 0);
 
         bassId = soundPool.load(context, R.raw.bass, 1);
         hihtId = soundPool.load(context, R.raw.hiht, 1);
@@ -44,19 +44,19 @@ public class SoundUtil {
                 SoundUtil.is_init = true;
             }
         });
+
+
+
+
     }
 
     public static void playNote(final int id){
         if(!is_init)
             return;
-        long cur = System.currentTimeMillis();
-       /// MainActivity.sp_test.setText(String.format("%.2f", (time_count - cur)/1000d));
-       // MainActivity.sp_test.setText(String.valueOf(time_count - cur));
-        time_count = cur;
         AsyncTask<Void, Void, Void> at = new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-                SoundUtil.soundPool.play(id, 1, 1, 0, 0, 1);
+                SoundUtil.soundPool.play(id, 1, 1, 1, 0, 1);
                 return null;
             }
         };
@@ -65,6 +65,8 @@ public class SoundUtil {
             at.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         else
             at.execute();
+
+       // SoundUtil.soundPool.play(id, 1, 1, 1, 0, 1);
     }
 
 }
