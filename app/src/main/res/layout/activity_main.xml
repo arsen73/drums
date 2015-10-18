@@ -117,7 +117,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:layout_gravity="center"
-            android:src="@drawable/dlogo"/>
+            android:src="@drawable/logot"/>
 
         <LinearLayout
             android:layout_toLeftOf="@+id/table"
